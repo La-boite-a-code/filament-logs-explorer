@@ -220,6 +220,7 @@ Please see [CHANGELOG](CHANGELOG.md) for what has changed recently.
 ## Credits
 
 - [Alexandre Ribes](https://github.com/la-boite-a-code)
+- [La boîte à code](https://laboiteacode.fr)
 
 ## License
 
