@@ -263,7 +263,10 @@ class FilamentLogsExplorerPlugin implements Plugin
 
     public function getActiveNavigationIcon(): string|BackedEnum|null
     {
-        return $this->activeNavigationIcon ?? config('filament-logs-explorer.navigation.active_icon');
+        return $this->activeNavigationIcon
+            ?? $this->navigationIcon
+            ?? config('filament-logs-explorer.navigation.active_icon')
+            ?? config('filament-logs-explorer.navigation.icon');
     }
 
     public function getNavigationGroup(): string|UnitEnum|null

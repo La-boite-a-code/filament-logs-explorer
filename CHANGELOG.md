@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A custom navigation icon set through `->navigationIcon()` on the plugin is now
+  also used for the page's **active** navigation state, instead of always falling
+  back to the configured `active_icon` default.
+- The previous / next match buttons are now disabled while a search has no
+  matches, so they no longer appear interactive when there is nothing to
+  navigate.
+
+### Changed
+
+- The log viewer slide-over is now wider (`7xl` instead of `3xl`) for more
+  comfortable reading of long log lines.
+
+## [0.1.0] - 2026-07-17
+
 ### Added
 
 - Initial release.

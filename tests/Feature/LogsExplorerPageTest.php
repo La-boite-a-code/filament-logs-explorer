@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Gate;
+use LaBoiteACode\FilamentLogsExplorer\FilamentLogsExplorerPlugin;
 use LaBoiteACode\FilamentLogsExplorer\Pages\LogsExplorer;
 use LaBoiteACode\FilamentLogsExplorer\Support\LogChannelRepository;
 use Livewire\Livewire;
@@ -89,6 +90,17 @@ it('respects a configured authorization gate', function () {
     config()->set('filament-logs-explorer.authorization.gate', 'view-logs');
 
     expect(LogsExplorer::canAccess())->toBeFalse();
+});
+
+it('lets a fluent navigation icon drive both the normal and active states', function () {
+    FilamentLogsExplorerPlugin::get()->navigationIcon('heroicon-o-cog');
+
+    expect(LogsExplorer::getNavigationIcon())->toBe('heroicon-o-cog')
+        ->and(LogsExplorer::getActiveNavigationIcon())->toBe('heroicon-o-cog');
+});
+
+it('still falls back to the configured active_icon default when nothing is customised', function () {
+    expect(LogsExplorer::getActiveNavigationIcon())->toBe('heroicon-s-document-magnifying-glass');
 });
 
 it('uses the translated navigation label for the current locale', function () {

@@ -197,7 +197,7 @@ class LogsExplorer extends Page
     {
         return Action::make('viewLog')
             ->slideOver()
-            ->modalWidth('3xl')
+            ->modalWidth('7xl')
             ->modalSubmitAction(false)
             ->modalCancelActionLabel(static::trans('viewer.close'))
             ->modalHeading(fn (array $arguments): string => $this->fileFor($arguments)?->name

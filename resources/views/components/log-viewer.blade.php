@@ -60,6 +60,7 @@
                 :label="__('filament-logs-explorer::filament-logs-explorer.viewer.previous_match')"
                 :tooltip="__('filament-logs-explorer::filament-logs-explorer.viewer.previous_match')"
                 color="gray"
+                x-bind:disabled="! matches.length"
                 x-on:click="previousMatch()"
             />
             <x-filament::icon-button
@@ -67,6 +68,7 @@
                 :label="__('filament-logs-explorer::filament-logs-explorer.viewer.next_match')"
                 :tooltip="__('filament-logs-explorer::filament-logs-explorer.viewer.next_match')"
                 color="gray"
+                x-bind:disabled="! matches.length"
                 x-on:click="nextMatch()"
             />
         </div>
