@@ -283,6 +283,9 @@ class LogChannelRepository
 
     /**
      * @param  array<string, true>  $seenPaths
+     *
+     * @param-out array<array-key, true>  $seenPaths
+     *
      * @return Collection<int, LogFile>
      */
     protected function untrackedFiles(array &$seenPaths): Collection

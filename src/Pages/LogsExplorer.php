@@ -202,7 +202,7 @@ class LogsExplorer extends Page
             ->modalWidth('7xl')
             ->modalSubmitAction(false)
             ->modalCancelActionLabel(static::trans('viewer.close'))
-            ->modalHeading(fn (array $arguments): string => $this->fileFor($arguments)?->name
+            ->modalHeading(fn (array $arguments): string => $this->fileFor($arguments)->name
                 ?? static::trans('viewer.title'))
             ->modalDescription(fn (array $arguments): ?string => $this->viewerDescription($arguments['file'] ?? ''))
             // Register the delete action as a modal action so the viewer's trash
