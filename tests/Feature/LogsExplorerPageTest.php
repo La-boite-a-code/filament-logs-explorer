@@ -73,6 +73,95 @@ it('downloads a file', function () {
         ->assertFileDownloaded('single.log');
 });
 
+it('deletes a file through the confirmed action', function () {
+    $path = $this->writeLog('single.log', "delete me\n");
+    $id = (new LogChannelRepository)->files()->first()->id();
+
+    expect(is_file($path))->toBeTrue();
+
+    Livewire::test(LogsExplorer::class)
+        ->call('mountAction', 'deleteLog', ['file' => $id])
+        ->call('callMountedAction')
+        ->assertOk();
+
+    expect(is_file($path))->toBeFalse();
+});
+
+it('does not delete until the confirmation is submitted', function () {
+    $path = $this->writeLog('single.log', "keep until confirmed\n");
+    $id = (new LogChannelRepository)->files()->first()->id();
+
+    Livewire::test(LogsExplorer::class)
+        ->call('mountAction', 'deleteLog', ['file' => $id])
+        ->assertActionMounted('deleteLog');
+
+    expect(is_file($path))->toBeTrue();
+});
+
+it('deletes the open file and closes the viewer slide-over', function () {
+    $path = $this->writeLog('single.log', "delete me\n");
+    $id = (new LogChannelRepository)->files()->first()->id();
+
+    Livewire::test(LogsExplorer::class)
+        ->call('mountAction', 'viewLog', ['file' => $id])
+        ->assertActionMounted('viewLog')
+        ->call('mountAction', 'deleteLog', ['file' => $id])
+        ->call('callMountedAction')
+        ->assertActionNotMounted('viewLog')
+        ->assertActionNotMounted('deleteLog');
+
+    expect(is_file($path))->toBeFalse();
+});
+
+it('does not delete when the feature is disabled', function () {
+    $path = $this->writeLog('single.log', "keep me\n");
+    $id = (new LogChannelRepository)->files()->first()->id();
+
+    FilamentLogsExplorerPlugin::get()->deletable(false);
+
+    Livewire::test(LogsExplorer::class)
+        ->call('mountAction', 'deleteLog', ['file' => $id])
+        ->call('callMountedAction');
+
+    expect(is_file($path))->toBeTrue();
+});
+
+it('respects a configured deletion gate', function () {
+    Gate::define('delete-logs', fn () => false);
+    config()->set('filament-logs-explorer.deletion.gate', 'delete-logs');
+
+    $path = $this->writeLog('single.log', "keep me\n");
+    $id = (new LogChannelRepository)->files()->first()->id();
+
+    Livewire::test(LogsExplorer::class)
+        ->call('mountAction', 'deleteLog', ['file' => $id])
+        ->call('callMountedAction');
+
+    expect(is_file($path))->toBeTrue();
+});
+
+it('is deletable by default', function () {
+    expect(FilamentLogsExplorerPlugin::get()->canDelete())->toBeTrue();
+});
+
+it('shows a delete control in the file list', function () {
+    $this->writeLog('single.log', "hello\n");
+
+    Livewire::test(LogsExplorer::class)
+        ->assertOk()
+        ->assertSee(__('filament-logs-explorer::filament-logs-explorer.viewer.delete'));
+});
+
+it('hides the delete control when the feature is disabled', function () {
+    $this->writeLog('single.log', "hello\n");
+
+    FilamentLogsExplorerPlugin::get()->deletable(false);
+
+    Livewire::test(LogsExplorer::class)
+        ->assertOk()
+        ->assertDontSee(__('filament-logs-explorer::filament-logs-explorer.viewer.delete'));
+});
+
 it('refreshes without error', function () {
     $this->writeLog('single.log', "a\n");
 

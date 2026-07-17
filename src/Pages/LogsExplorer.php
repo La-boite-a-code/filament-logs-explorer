@@ -6,8 +6,10 @@ namespace LaBoiteACode\FilamentLogsExplorer\Pages;
 
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Panel;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -203,7 +205,45 @@ class LogsExplorer extends Page
             ->modalHeading(fn (array $arguments): string => $this->fileFor($arguments)?->name
                 ?? static::trans('viewer.title'))
             ->modalDescription(fn (array $arguments): ?string => $this->viewerDescription($arguments['file'] ?? ''))
+            // Register the delete action as a modal action so the viewer's trash
+            // button can mount it *stacked on top of* the open slide-over (nested
+            // actions are resolved from their parent, not the page).
+            ->registerModalActions([
+                $this->deleteLogAction(),
+            ])
             ->modalContent(fn (array $arguments): ?View => $this->viewerContent($arguments['file'] ?? ''));
+    }
+
+    /**
+     * The confirmation action for deleting a log file. It is mounted both from
+     * the file list and from the viewer toolbar with
+     * `mountAction('deleteLog', { file: '<id>' })`. When it is confirmed from
+     * within the viewer slide-over, `cancelParentActions()` makes it close the
+     * slide-over too; cancelling it leaves the viewer open.
+     */
+    public function deleteLogAction(): Action
+    {
+        return Action::make('deleteLog')
+            ->label(static::trans('viewer.delete'))
+            ->icon('heroicon-o-trash')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalIcon('heroicon-o-trash')
+            ->modalHeading(static::trans('delete.modal_heading'))
+            ->modalDescription(function (array $arguments): ?string {
+                $file = $this->fileFor($arguments);
+
+                return $file === null
+                    ? null
+                    : static::trans('delete.modal_description', ['name' => $file->name]);
+            })
+            ->modalSubmitActionLabel(static::trans('viewer.delete'))
+            ->cancelParentActions()
+            ->action(function (array $arguments): void {
+                if (! $this->deleteFile($arguments['file'] ?? '')) {
+                    throw new Halt;
+                }
+            });
     }
 
     public function downloadFile(string $id): ?BinaryFileResponse
@@ -215,6 +255,52 @@ class LogsExplorer extends Page
         }
 
         return response()->download($file->path, $file->name);
+    }
+
+    /**
+     * Permanently delete a log file from disk. The file is resolved back from
+     * its opaque id (never a raw path), guaranteeing it belongs to the set the
+     * repository resolved itself, and the deletion is re-authorized server-side.
+     * Returns whether the file is gone afterwards, so {@see self::deleteLogAction()}
+     * can keep the confirmation modal open when the deletion fails.
+     */
+    protected function deleteFile(string $id): bool
+    {
+        if (! $this->canDelete()) {
+            return false;
+        }
+
+        $file = $this->repository()->find($id);
+
+        if ($file === null) {
+            return false;
+        }
+
+        if (is_file($file->path) && ! @unlink($file->path)) {
+            Notification::make()
+                ->danger()
+                ->title(static::trans('delete.failed_title'))
+                ->body(static::trans('delete.failed_body', ['name' => $file->name]))
+                ->send();
+
+            return false;
+        }
+
+        // Re-scan the disk so the list no longer shows the deleted file.
+        $this->refreshLogs();
+
+        Notification::make()
+            ->success()
+            ->title(static::trans('delete.success_title'))
+            ->body(static::trans('delete.success_body', ['name' => $file->name]))
+            ->send();
+
+        return true;
+    }
+
+    public function canDelete(): bool
+    {
+        return static::plugin()?->canDelete() ?? false;
     }
 
     public function refreshLogs(): void
@@ -253,6 +339,7 @@ class LogsExplorer extends Page
             'content' => FilamentLogsExplorerPlugin::get()->makeReader()->read($file),
             'previousFileId' => $this->previousFileId($id),
             'nextFileId' => $this->nextFileId($id),
+            'canDelete' => $this->canDelete(),
         ]);
     }
 

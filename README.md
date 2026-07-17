@@ -15,6 +15,8 @@ navigation and in-file search.
 - 🔎 **Slide-over viewer** with in-file search (highlighting + match
   navigation), jump to start / end, previous / next file, download and keyboard
   shortcuts.
+- 🗑️ **Delete log files** from the list or the viewer, behind a confirmation and
+  its own authorization hook (enabled by default, fully toggleable).
 - ⚙️ **Fully configurable** — channels, number of files, menu, reader limits —
   through a config file *and* a fluent plugin API.
 - 🔒 **Authorization** via `canAccess()` (Gate ability or a custom closure).
@@ -85,6 +87,7 @@ last modified). Clicking a file opens it in a **slide-over** where you can:
 | Open the previous / next file | `‹` / `›` buttons (without leaving the slide-over) |
 | Focus the search box | `/` |
 | Download the raw file | Download button |
+| Delete the file | Delete button (asks for confirmation first) |
 
 Large files are truncated to keep the UI responsive (see
 [Large files](#large-files)).
@@ -165,6 +168,39 @@ FilamentLogsExplorerPlugin::make()
 
 This drives the page's `canAccess()` method, so it controls both the navigation
 visibility and the route authorization.
+
+### Deleting log files
+
+Every file can be deleted from the file list or from the viewer's toolbar. The
+trash button opens a **confirmation dialog** before permanently removing the
+file from disk; deleting the file you are viewing also closes the slide-over.
+The feature is **enabled by default** and has its own authorization, independent
+of read access, so you can let people browse logs without letting them delete.
+
+Turn it off entirely, or restrict who can delete:
+
+```php
+// config/filament-logs-explorer.php
+'deletion' => [
+    'enabled' => true,
+    // Gate ability required to delete a file. Null => anyone who can access the page.
+    'gate' => 'delete-logs',
+],
+```
+
+```php
+FilamentLogsExplorerPlugin::make()
+    ->deletable(false);   // hide the delete buttons entirely
+```
+
+```php
+FilamentLogsExplorerPlugin::make()
+    ->canDeleteUsing(fn (): bool => auth()->user()?->can('deleteLogs') ?? false);
+```
+
+Like every other option, the fluent value wins over the config file. Files are
+always resolved back from an opaque id (never a raw path), so only files the
+plugin listed itself can be deleted.
 
 ### Large files
 

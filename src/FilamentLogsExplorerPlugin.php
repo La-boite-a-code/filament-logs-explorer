@@ -74,6 +74,10 @@ class FilamentLogsExplorerPlugin implements Plugin
 
     protected ?Closure $canAccessUsing = null;
 
+    protected ?bool $deletable = null;
+
+    protected ?Closure $canDeleteUsing = null;
+
     public function getId(): string
     {
         return 'filament-logs-explorer';
@@ -250,6 +254,28 @@ class FilamentLogsExplorerPlugin implements Plugin
         return $this;
     }
 
+    /**
+     * Enable or disable the "delete file" feature (the trash buttons in the
+     * file list and in the viewer). Enabled by default.
+     */
+    public function deletable(bool $condition = true): static
+    {
+        $this->deletable = $condition;
+
+        return $this;
+    }
+
+    /**
+     * Override who is allowed to delete a log file. Takes precedence over the
+     * configured deletion gate.
+     */
+    public function canDeleteUsing(Closure $callback): static
+    {
+        $this->canDeleteUsing = $callback;
+
+        return $this;
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Resolved values (fluent API overrides config, config provides defaults)
@@ -366,6 +392,38 @@ class FilamentLogsExplorerPlugin implements Plugin
         }
 
         $gate = config('filament-logs-explorer.authorization.gate');
+
+        if (is_string($gate) && $gate !== '') {
+            return Gate::allows($gate) === true;
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether the "delete file" feature is enabled at all.
+     */
+    public function isDeletable(): bool
+    {
+        return $this->deletable ?? (bool) config('filament-logs-explorer.deletion.enabled', true);
+    }
+
+    /**
+     * Whether the current user may delete a log file. This is both an on/off
+     * switch ({@see self::isDeletable()}) and an authorization check (a custom
+     * closure, then a configured gate, then "allowed").
+     */
+    public function canDelete(): bool
+    {
+        if (! $this->isDeletable()) {
+            return false;
+        }
+
+        if ($this->canDeleteUsing instanceof Closure) {
+            return (bool) call_user_func($this->canDeleteUsing);
+        }
+
+        $gate = config('filament-logs-explorer.deletion.gate');
 
         if (is_string($gate) && $gate !== '') {
             return Gate::allows($gate) === true;

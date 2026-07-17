@@ -9,6 +9,8 @@
         /** @var \LaBoiteACode\FilamentLogsExplorer\Data\LogFileContent $content */
         /** @var string|null $previousFileId */
         /** @var string|null $nextFileId */
+        /** @var bool $canDelete */
+        $canDelete = $canDelete ?? false;
         $lines = $content->content === '' ? [] : explode("\n", $content->content);
     @endphp
 
@@ -96,6 +98,17 @@
                 wire:click="downloadFile('{{ $file->id() }}')"
                 wire:loading.attr="disabled"
             />
+
+            @if ($canDelete)
+                <x-filament::icon-button
+                    icon="heroicon-o-trash"
+                    :label="__('filament-logs-explorer::filament-logs-explorer.viewer.delete')"
+                    :tooltip="__('filament-logs-explorer::filament-logs-explorer.viewer.delete')"
+                    color="danger"
+                    wire:click="mountAction('deleteLog', { file: '{{ $file->id() }}' })"
+                    wire:loading.attr="disabled"
+                />
+            @endif
         </div>
     </div>
 

@@ -43,14 +43,10 @@
 .lge-file-row {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.25rem;
     width: 100%;
-    padding: 0.625rem 0.75rem;
     border-radius: 0.5rem;
-    text-align: start;
-    background: transparent;
     transition: background-color 0.15s ease;
-    cursor: pointer;
 }
 
 .lge-file-row:hover {
@@ -65,9 +61,29 @@
     background-color: rgba(99, 102, 241, 0.1);
 }
 
-.lge-file-row--disabled {
+/* The clickable area that opens the file (everything except the delete button). */
+.lge-file-open {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    text-align: start;
+    background: transparent;
+    cursor: pointer;
+}
+
+.lge-file-open:disabled {
     cursor: not-allowed;
     opacity: 0.6;
+}
+
+/* Trailing "delete file" button, kept usable even when the file is unreadable. */
+.lge-file-delete {
+    flex: 0 0 auto;
+    margin-inline-end: 0.5rem;
 }
 
 .lge-file-icon {
@@ -298,7 +314,7 @@
 
 /* Log content */
 .lge-viewer {
-    max-height: calc(100dvh - 16rem);
+    max-height: calc(100dvh - 20rem);
     min-height: 14rem;
     overflow: auto;
     border-radius: 0.5rem;

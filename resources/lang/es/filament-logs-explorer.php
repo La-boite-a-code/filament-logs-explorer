@@ -59,8 +59,18 @@ return [
         'copy' => 'Copiar',
         'copied' => '¡Copiado!',
         'download' => 'Descargar',
+        'delete' => 'Eliminar',
         'close' => 'Cerrar',
         'keyboard_hint' => 'Atajos: / buscar · n / N coincidencia siguiente / anterior · g / G principio / final',
+    ],
+
+    'delete' => [
+        'modal_heading' => '¿Eliminar este archivo de registro?',
+        'modal_description' => '¿Eliminar permanentemente «:name»? Esta acción no se puede deshacer.',
+        'success_title' => 'Archivo eliminado',
+        'success_body' => '«:name» se ha eliminado.',
+        'failed_title' => 'Error al eliminar',
+        'failed_body' => 'No se pudo eliminar «:name».',
     ],
 
 ];

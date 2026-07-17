@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Delete a log file** from the file list or from the viewer slide-over. The
+  trash button asks for confirmation before permanently removing the file from
+  disk. The feature is enabled by default and has its own authorization,
+  independent of read access — configurable through `deletion.enabled` /
+  `deletion.gate` in the config, or the plugin's `->deletable()` and
+  `->canDeleteUsing()` methods.
+
+### Fixed
+
+- The log viewer no longer makes the whole slide-over scroll: the code area is
+  capped so the toolbar (search / navigation) and the footer stay visible, and
+  only the log content scrolls.
+
 ## [0.2.0] - 2026-07-17
 
 ### Fixed

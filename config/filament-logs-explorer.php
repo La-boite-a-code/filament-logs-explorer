@@ -133,4 +133,27 @@ return [
         'gate' => null,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Deletion
+    |--------------------------------------------------------------------------
+    |
+    | Controls the "delete file" feature: a trash button on each file in the
+    | list and in the viewer that permanently removes the file from disk. It is
+    | enabled by default; disable it entirely, restrict it to a Gate ability, or
+    | override the whole check through the plugin's fluent API:
+    |
+    |     FilamentLogsExplorerPlugin::make()
+    |         ->deletable(false);
+    |
+    |     FilamentLogsExplorerPlugin::make()
+    |         ->canDeleteUsing(fn (): bool => auth()->user()?->isAdmin() ?? false);
+    |
+    */
+
+    'deletion' => [
+        'enabled' => true,
+        'gate' => null,
+    ],
+
 ];

@@ -59,8 +59,18 @@ return [
         'copy' => 'Copy',
         'copied' => 'Copied!',
         'download' => 'Download',
+        'delete' => 'Delete',
         'close' => 'Close',
         'keyboard_hint' => 'Shortcuts: / search · n / N next / previous match · g / G top / bottom',
+    ],
+
+    'delete' => [
+        'modal_heading' => 'Delete this log file?',
+        'modal_description' => 'Permanently delete ":name"? This cannot be undone.',
+        'success_title' => 'File deleted',
+        'success_body' => '":name" was deleted.',
+        'failed_title' => 'Deletion failed',
+        'failed_body' => 'Could not delete ":name".',
     ],
 
 ];

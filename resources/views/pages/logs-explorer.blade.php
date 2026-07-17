@@ -1,4 +1,6 @@
 <x-filament-panels::page>
+    @php($canDelete = $this->canDelete())
+
     <div class="lge-page">
         @forelse ($this->channels as $channel)
             <x-filament::section
@@ -22,17 +24,14 @@
 
                 <ul role="list" class="lge-file-list">
                     @foreach ($channel->files as $file)
-                        <li>
+                        <li class="lge-file-row">
                             <button
                                 type="button"
                                 @disabled(! $file->readable)
                                 wire:click="mountAction('viewLog', { file: '{{ $file->id() }}' })"
                                 wire:loading.attr="disabled"
                                 wire:target="mountAction"
-                                @class([
-                                    'lge-file-row',
-                                    'lge-file-row--disabled' => ! $file->readable,
-                                ])
+                                class="lge-file-open"
                             >
                                 <x-filament::icon
                                     icon="heroicon-o-document-text"
@@ -63,6 +62,18 @@
                                     />
                                 @endif
                             </button>
+
+                            @if ($canDelete)
+                                <x-filament::icon-button
+                                    icon="heroicon-o-trash"
+                                    :label="__('filament-logs-explorer::filament-logs-explorer.viewer.delete')"
+                                    :tooltip="__('filament-logs-explorer::filament-logs-explorer.viewer.delete')"
+                                    color="danger"
+                                    class="lge-file-delete"
+                                    wire:click="mountAction('deleteLog', { file: '{{ $file->id() }}' })"
+                                    wire:loading.attr="disabled"
+                                />
+                            @endif
                         </li>
                     @endforeach
                 </ul>

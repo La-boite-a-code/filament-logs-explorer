@@ -59,8 +59,18 @@ return [
         'copy' => 'Copier',
         'copied' => 'Copié !',
         'download' => 'Télécharger',
+        'delete' => 'Supprimer',
         'close' => 'Fermer',
         'keyboard_hint' => 'Raccourcis : / rechercher · n / N occurrence suivante / précédente · g / G début / fin',
+    ],
+
+    'delete' => [
+        'modal_heading' => 'Supprimer ce fichier de journal ?',
+        'modal_description' => 'Supprimer définitivement « :name » ? Cette action est irréversible.',
+        'success_title' => 'Fichier supprimé',
+        'success_body' => '« :name » a été supprimé.',
+        'failed_title' => 'Échec de la suppression',
+        'failed_body' => 'Impossible de supprimer « :name ».',
     ],
 
 ];
