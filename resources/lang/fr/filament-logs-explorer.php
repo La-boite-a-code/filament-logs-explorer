@@ -71,6 +71,9 @@ return [
         'success_body' => '« :name » a été supprimé.',
         'failed_title' => 'Échec de la suppression',
         'failed_body' => 'Impossible de supprimer « :name ».',
+        'denied_title' => 'Action non autorisée',
+        'denied_body' => 'Vous n’êtes pas autorisé à supprimer des fichiers de journal.',
+        'missing_body' => 'Ce fichier de journal n’existe plus.',
     ],
 
 ];

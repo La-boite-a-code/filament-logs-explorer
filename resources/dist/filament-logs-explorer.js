@@ -1,5 +1,5 @@
 /**
- * Filament Logs Explorer — log viewer Alpine component.
+ * Filament Logs Explorer - log viewer Alpine component.
  *
  * Handles client-side searching (with safe highlighting), match navigation and
  * scrolling within a single, already-rendered log file. Moving between files is
@@ -10,13 +10,31 @@
 document.addEventListener('alpine:init', () => {
     window.Alpine.data('logsExplorerViewer', () => ({
         query: '',
+        // Every matching line, in document order. Drives the match counter and
+        // the previous / next navigation.
         matches: [],
         currentMatch: -1,
 
-        // Cache of { el, text } for every rendered line.
+        // Cache of { el, text, marked } for every rendered line.
         lines: [],
-        // Currently highlighted line objects, so we only ever reset those.
-        highlighted: [],
+        // Matching lines, which carry the row tint and must have it removed.
+        matched: [],
+        // Lines whose markup was replaced to wrap the query in <mark>, so we
+        // know which ones need their original text restored.
+        marked: [],
+        // The line carrying the "current match" styling, kept around so we can
+        // clear it without walking every match.
+        currentLine: null,
+
+        /**
+         * Marking a line replaces its markup, which means parsing HTML for it.
+         * That does not scale to the tens of thousands of lines a large file can
+         * produce: a broad query would otherwise rewrite the whole viewer on
+         * every keystroke. Past this many matches, lines are still tinted and
+         * still navigable, and their marks are applied on demand as soon as they
+         * become the current match.
+         */
+        maxMarkedLines: 500,
 
         init() {
             this.cacheLines();
@@ -35,27 +53,31 @@ document.addEventListener('alpine:init', () => {
             this.lines = Array.from(viewer.querySelectorAll('[data-log-line]')).map((el) => ({
                 el,
                 text: el.textContent,
+                marked: false,
             }));
         },
 
         runSearch() {
             this.resetHighlights();
 
-            this.matches = [];
-            this.currentMatch = -1;
-
-            const needle = this.query.trim().toLowerCase();
+            const query = this.query.trim();
+            const needle = query.toLowerCase();
 
             if (needle === '') {
                 return;
             }
 
             for (const line of this.lines) {
-                if (line.text.toLowerCase().includes(needle)) {
-                    line.el.innerHTML = this.highlight(line.text, this.query.trim());
-                    line.el.classList.add('lge-line--match');
-                    this.highlighted.push(line);
-                    this.matches.push(line.el);
+                if (! line.text.toLowerCase().includes(needle)) {
+                    continue;
+                }
+
+                line.el.classList.add('lge-line--match');
+                this.matched.push(line);
+                this.matches.push(line);
+
+                if (this.marked.length < this.maxMarkedLines) {
+                    this.markLine(line, query);
                 }
             }
 
@@ -65,20 +87,67 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        markLine(line, query) {
+            if (line.marked) {
+                return;
+            }
+
+            line.el.innerHTML = this.highlight(line.text, query);
+            line.marked = true;
+            this.marked.push(line);
+        },
+
         resetHighlights() {
-            for (const line of this.highlighted) {
+            for (const line of this.marked) {
                 line.el.textContent = line.text;
+                line.marked = false;
+            }
+
+            for (const line of this.matched) {
                 line.el.classList.remove('lge-line--match', 'lge-line--current');
             }
 
-            this.highlighted = [];
+            this.marked = [];
+            this.matched = [];
+            this.matches = [];
+            this.currentMatch = -1;
+            this.currentLine = null;
         },
 
+        /**
+         * Wrap every occurrence of the query in a <mark>, escaping the text one
+         * segment at a time.
+         *
+         * Escaping the whole line first and then searching the escaped string
+         * would let a query such as "39", "quot" or "amp" match *inside* an HTML
+         * entity and split it, so a line containing an apostrophe would render
+         * as "Can&#39;t" instead of "Can't".
+         */
         highlight(text, query) {
-            const escaped = this.escapeHtml(text);
-            const pattern = new RegExp(this.escapeRegExp(this.escapeHtml(query)), 'gi');
+            const needle = query.toLowerCase();
 
-            return escaped.replace(pattern, (match) => `<mark class="lge-mark">${match}</mark>`);
+            if (needle === '') {
+                return this.escapeHtml(text);
+            }
+
+            const haystack = text.toLowerCase();
+            let out = '';
+            let index = 0;
+
+            for (;;) {
+                const found = haystack.indexOf(needle, index);
+
+                if (found === -1) {
+                    break;
+                }
+
+                out += this.escapeHtml(text.slice(index, found));
+                out += `<mark class="lge-mark">${this.escapeHtml(text.slice(found, found + needle.length))}</mark>`;
+
+                index = found + needle.length;
+            }
+
+            return out + this.escapeHtml(text.slice(index));
         },
 
         escapeHtml(value) {
@@ -89,10 +158,6 @@ document.addEventListener('alpine:init', () => {
                 '"': '&quot;',
                 "'": '&#39;',
             })[char]);
-        },
-
-        escapeRegExp(value) {
-            return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         },
 
         nextMatch() {
@@ -114,16 +179,24 @@ document.addEventListener('alpine:init', () => {
         },
 
         focusCurrentMatch() {
-            this.matches.forEach((el) => el.classList.remove('lge-line--current'));
+            this.currentLine?.el.classList.remove('lge-line--current');
 
-            const el = this.matches[this.currentMatch];
+            const line = this.matches[this.currentMatch];
 
-            if (! el) {
+            if (! line) {
+                this.currentLine = null;
+
                 return;
             }
 
-            el.classList.add('lge-line--current');
-            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            // Past maxMarkedLines the line was left untouched, so mark it now
+            // that the user has actually navigated to it.
+            this.markLine(line, this.query.trim());
+
+            line.el.classList.add('lge-line--current');
+            line.el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+
+            this.currentLine = line;
         },
 
         matchLabel() {

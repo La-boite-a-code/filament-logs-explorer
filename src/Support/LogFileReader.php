@@ -134,9 +134,33 @@ class LogFileReader
         return $content;
     }
 
+    /**
+     * Normalise line endings and guarantee valid UTF-8.
+     *
+     * Log files carry whatever bytes the application wrote: a binary payload in
+     * an exception dump, legacy latin-1 input, or a multibyte character cut in
+     * half by the truncation window. Blade escapes with htmlspecialchars() using
+     * ENT_QUOTES but not ENT_SUBSTITUTE, which returns an EMPTY string for an
+     * invalid sequence, so a single bad byte would silently blank out the whole
+     * line. Substituting U+FFFD keeps the line readable and makes the damaged
+     * bytes visible instead.
+     */
     protected function normalize(string $content): string
     {
-        return str_replace(["\r\n", "\r"], "\n", $content);
+        $content = str_replace(["\r\n", "\r"], "\n", $content);
+
+        if ($content === '' || mb_check_encoding($content, 'UTF-8')) {
+            return $content;
+        }
+
+        $substitute = mb_substitute_character();
+        mb_substitute_character(0xFFFD);
+
+        try {
+            return mb_convert_encoding($content, 'UTF-8', 'UTF-8');
+        } finally {
+            mb_substitute_character($substitute);
+        }
     }
 
     protected function countLines(string $content): int

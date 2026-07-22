@@ -1,5 +1,6 @@
 # Files and folders that should not be part of the distributed package.
 /.github            export-ignore
+/art                export-ignore
 /tests              export-ignore
 /.editorconfig      export-ignore
 /.gitattributes     export-ignore

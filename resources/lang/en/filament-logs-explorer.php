@@ -71,6 +71,9 @@ return [
         'success_body' => '":name" was deleted.',
         'failed_title' => 'Deletion failed',
         'failed_body' => 'Could not delete ":name".',
+        'denied_title' => 'Not allowed',
+        'denied_body' => 'You are not allowed to delete log files.',
+        'missing_body' => 'This log file no longer exists.',
     ],
 
 ];

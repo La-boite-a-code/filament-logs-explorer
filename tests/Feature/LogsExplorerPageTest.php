@@ -144,6 +144,36 @@ it('is deletable by default', function () {
     expect(FilamentLogsExplorerPlugin::get()->canDelete())->toBeTrue();
 });
 
+it('does not even mount the delete action without permission', function () {
+    $path = $this->writeLog('single.log', "keep me\n");
+    $id = (new LogChannelRepository)->files()->first()->id();
+
+    FilamentLogsExplorerPlugin::get()->deletable(false);
+
+    // The no-argument form asserts that *nothing* is mounted. Passing a name
+    // instead returns early without asserting when the action is absent, so it
+    // would pass vacuously here.
+    Livewire::test(LogsExplorer::class)
+        ->call('mountAction', 'deleteLog', ['file' => $id])
+        ->assertActionNotMounted();
+
+    expect(is_file($path))->toBeTrue();
+});
+
+it('does not mount the delete action when the gate denies it', function () {
+    Gate::define('delete-logs', fn () => false);
+    config()->set('filament-logs-explorer.deletion.gate', 'delete-logs');
+
+    $path = $this->writeLog('single.log', "keep me\n");
+    $id = (new LogChannelRepository)->files()->first()->id();
+
+    Livewire::test(LogsExplorer::class)
+        ->call('mountAction', 'deleteLog', ['file' => $id])
+        ->assertActionNotMounted();
+
+    expect(is_file($path))->toBeTrue();
+});
+
 it('shows a delete control in the file list', function () {
     $this->writeLog('single.log', "hello\n");
 

@@ -73,3 +73,27 @@ it('can keep the head of large files instead', function () {
         ->and($content->position)->toBe('head')
         ->and($content->content)->toStartWith('line 1');
 });
+
+it('leaves valid multibyte utf-8 untouched', function () {
+    $path = $this->writeLog('single.log', "café ☕\nsecond");
+    $file = LogFile::fromPath('single', 'Single', $path);
+
+    expect((new LogFileReader)->read($file)->content)->toBe("café ☕\nsecond");
+});
+
+it('keeps a line with invalid utf-8 bytes readable', function () {
+    // A raw latin-1 byte, as a binary payload or legacy input would produce.
+    $path = $this->writeLog('single.log', "before\nbroken ".chr(0xE9)." byte\nafter");
+    $file = LogFile::fromPath('single', 'Single', $path);
+
+    $content = (new LogFileReader)->read($file);
+
+    expect(mb_check_encoding($content->content, 'UTF-8'))->toBeTrue();
+
+    // Blade escapes with htmlspecialchars(ENT_QUOTES), which returns an empty
+    // string for an invalid sequence. Without sanitising, the whole line would
+    // render blank rather than just the offending byte.
+    $line = explode("\n", $content->content)[1];
+
+    expect(e($line))->toContain('broken')->toContain('byte');
+});

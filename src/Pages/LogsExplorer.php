@@ -227,6 +227,9 @@ class LogsExplorer extends Page
             ->label(static::trans('viewer.delete'))
             ->icon('heroicon-o-trash')
             ->color('danger')
+            // Keep the action off the page entirely when the user may not
+            // delete, so it cannot be mounted only to refuse on submit.
+            ->visible(fn (): bool => $this->canDelete())
             ->requiresConfirmation()
             ->modalIcon('heroicon-o-trash')
             ->modalHeading(static::trans('delete.modal_heading'))
@@ -267,12 +270,24 @@ class LogsExplorer extends Page
     protected function deleteFile(string $id): bool
     {
         if (! $this->canDelete()) {
+            Notification::make()
+                ->danger()
+                ->title(static::trans('delete.denied_title'))
+                ->body(static::trans('delete.denied_body'))
+                ->send();
+
             return false;
         }
 
         $file = $this->repository()->find($id);
 
         if ($file === null) {
+            Notification::make()
+                ->danger()
+                ->title(static::trans('delete.failed_title'))
+                ->body(static::trans('delete.missing_body'))
+                ->send();
+
             return false;
         }
 

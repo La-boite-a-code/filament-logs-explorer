@@ -25,6 +25,8 @@ return [
         'register' => true,
         'sort' => null,
         'group' => null,
+        // Nest the entry under an existing navigation item, by its label.
+        'parent_item' => null,
         'label' => null,
         'icon' => 'heroicon-o-document-magnifying-glass',
         'active_icon' => 'heroicon-s-document-magnifying-glass',

@@ -5,40 +5,52 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/laboiteacode/filament-logs-explorer.svg?style=flat-square)](https://packagist.org/packages/laboiteacode/filament-logs-explorer)
 [![License](https://img.shields.io/packagist/l/laboiteacode/filament-logs-explorer.svg?style=flat-square)](LICENSE.md)
 
-Browse, read and search your Laravel **log files** straight from your Filament
-panel — grouped by logging channel, opened in a slide-over with quick
-navigation and in-file search.
+Read your Laravel log files without leaving your Filament panel. Files are
+grouped by logging channel and open in a slide-over with in-file search, match
+navigation and keyboard shortcuts.
 
-- 📂 **Lists the most recent log files per channel**, resolved from your
-  `config/logging.php` (`single`, `daily`, `monolog` stream, and the file based
-  members of a `stack`).
-- 🔎 **Slide-over viewer** with in-file search (highlighting + match
-  navigation), jump to start / end, previous / next file, download and keyboard
-  shortcuts.
-- 🗑️ **Delete log files** from the list or the viewer, behind a confirmation and
-  its own authorization hook (enabled by default, fully toggleable).
-- ⚙️ **Fully configurable** — channels, number of files, menu, reader limits —
-  through a config file *and* a fluent plugin API.
-- 🔒 **Authorization** via `canAccess()` (Gate ability or a custom closure).
-- 🌍 **Translated** into French, English and Spanish.
-- 🧩 Works with **Filament v4 and v5**, Laravel 11 / 12 / 13, PHP 8.2 → 8.5.
+![Filament Logs Explorer](art/banner.jpg)
 
-## Requirements
+## Features
 
-- PHP 8.2, 8.3, 8.4 or 8.5
-- Laravel 11, 12 or 13
-- Filament 4 or 5
+- **Channel aware.** Log files are resolved from your `config/logging.php`,
+  not from a hardcoded path: `single`, `daily`, `monolog` stream handlers, and
+  the file based members of a `stack`.
+- **Slide-over viewer.** In-file search with highlighting and match navigation,
+  jump to start or end, move to the previous or next file without closing the
+  slide-over, and download the raw file.
+- **Keyboard driven.** `/` to search, `n` and `N` to walk through matches,
+  `g` and `G` to jump to the start or the end of the file.
+- **Safe on large files.** Files above a configurable size are truncated, and
+  the viewer loads the end of the file first so the most recent entries are
+  always the ones you see.
+- **File deletion.** Delete a log file from the list or from the viewer, behind
+  a confirmation dialog and its own authorization hook, independent of read
+  access.
+- **Configurable twice over.** Every option is available both in a published
+  config file and through a fluent, per-panel plugin API.
+- **Authorization built in.** A single `canAccess()` hook drives both the
+  navigation item and the route.
+- **Translated.** Ships with English, French and Spanish.
+
+## Compatibility
+
+| Package  | Supported versions |
+| -------- | -------------- |
+| PHP      | 8.2, 8.3, 8.4, 8.5 |
+| Laravel  | 12, 13         |
+| Filament | 4, 5           |
 
 ## Installation
 
-Install the package via Composer:
+Install the package with Composer:
 
 ```bash
 composer require laboiteacode/filament-logs-explorer
 ```
 
-Register the plugin on the Filament panel(s) where you want it to appear — most
-commonly in your `app/Providers/Filament/AdminPanelProvider.php`:
+Register the plugin on every panel where it should appear, usually in
+`app/Providers/Filament/AdminPanelProvider.php`:
 
 ```php
 use LaBoiteACode\FilamentLogsExplorer\FilamentLogsExplorerPlugin;
@@ -51,78 +63,107 @@ public function panel(Panel $panel): Panel
 }
 ```
 
-That is all you need: a **Logs** entry appears in the navigation and lists every
-file based channel it can find.
+That is the whole setup. A **Logs** entry appears in the navigation and lists
+every file based channel the plugin can find.
 
-The viewer's CSS/JS are registered with Filament automatically. In production,
-make sure they are published like any other Filament assets:
+### Assets
+
+The viewer's CSS and JS are registered with Filament automatically. In
+production, publish them like any other Filament asset:
 
 ```bash
 php artisan filament:assets
 ```
 
-Optionally publish the config file and the translations:
+### Publishing
+
+All three publishable groups are optional:
 
 ```bash
+# config/filament-logs-explorer.php
 php artisan vendor:publish --tag="filament-logs-explorer-config"
+
+# lang/vendor/filament-logs-explorer/{locale}/filament-logs-explorer.php
 php artisan vendor:publish --tag="filament-logs-explorer-translations"
-```
 
-And, if you want to fully customise the markup, the views:
-
-```bash
+# resources/views/vendor/filament-logs-explorer/
 php artisan vendor:publish --tag="filament-logs-explorer-views"
 ```
 
-## What it looks like
+## Usage
 
-The **Logs** page lists, for every channel, its most recent files (name, size,
-last modified). Clicking a file opens it in a **slide-over** where you can:
+### The Logs page
 
-| Action | How |
-| --- | --- |
-| Search in the file | Type in the search box (matches are highlighted) |
-| Jump between matches | `↑` / `↓` buttons, or `n` / `N` |
-| Go to the start / end of the file | Buttons, or `g` / `G` |
-| Open the previous / next file | `‹` / `›` buttons (without leaving the slide-over) |
-| Focus the search box | `/` |
-| Download the raw file | Download button |
-| Delete the file | Delete button (asks for confirmation first) |
+The page renders one collapsible section per channel, each showing that
+channel's most recent files with their name, size and last modified date. A
+**Refresh** action in the header re-scans the disk.
 
-Large files are truncated to keep the UI responsive (see
-[Large files](#large-files)).
+Clicking a file opens it in the viewer. Files the process cannot read are
+listed but marked as unreadable, so a permission problem is visible instead of
+silent.
+
+### The viewer
+
+| Action                            | How                                            |
+| --------------------------------- | ---------------------------------------------- |
+| Search in the file                | Type in the search box, matches are highlighted |
+| Jump between matches              | The up and down buttons, or `n` and `N`         |
+| Go to the start or end of the file | The two buttons, or `g` and `G`                |
+| Open the previous or next file    | The `<` and `>` buttons, without closing the slide-over |
+| Focus the search box              | `/`                                             |
+| Download the raw file             | The download button                             |
+| Delete the file                   | The trash button, after a confirmation          |
+
+While the search box has focus, `Enter` moves to the next match, `Shift+Enter`
+to the previous one, and `Escape` clears the search. The single letter
+shortcuts are only active outside the search box, so typing `n` in a query does
+what you expect.
+
+### Large files
+
+Files larger than `reader.max_bytes` (5 MB by default) are truncated. The
+viewer loads the **end** of the file, which is where the most recent entries
+are, and shows a banner explaining that the file was truncated and inviting the
+user to download it in full. Set `reader.tail_when_exceeded` to `false` to load
+the beginning instead.
 
 ## Configuration
 
-Every option below can be set **globally** in the published
-`config/filament-logs-explorer.php` file, or **per-panel** through the fluent
-plugin API (the fluent value always wins).
+Every option can be set **globally** in the published
+`config/filament-logs-explorer.php`, or **per panel** through the fluent plugin
+API. The fluent value always wins, which lets several panels in the same
+application expose different subsets of the logs.
 
 ### Channels
 
 By default the plugin auto-discovers every file based channel declared in
-`config/logging.php`. You can restrict and order them:
+`config/logging.php`. Provide an explicit list to restrict and order them:
 
 ```php
 // config/filament-logs-explorer.php
-'channels' => ['daily', 'single'],   // empty => auto-discover
+'channels' => ['daily', 'single'],  // empty array => auto-discover
 'exclude_channels' => ['emergency'],
-'expand_stacks' => true,             // expand "stack" channels into their members
+'expand_stacks' => true,            // expand "stack" channels into their members
+'files_per_channel' => 15,
 ```
 
 ```php
 FilamentLogsExplorerPlugin::make()
     ->channels(['daily', 'single'])
     ->excludeChannels(['emergency'])
-    ->filesPerChannel(20);           // how many recent files to list per channel
+    ->expandStacks()
+    ->filesPerChannel(20);
 ```
 
-Want to surface `*.log` files that are not attached to any channel? Enable the
-directory scan:
+### Untracked files
+
+To also surface `*.log` files that are not attached to any channel, enable the
+directory scan. Those files are grouped under their own section:
 
 ```php
 'discover_untracked_files' => true,
-'log_directory' => storage_path('logs'), // null => storage_path('logs')
+'log_directory' => null,             // null => storage_path('logs')
+'untracked_channel_label' => null,   // null => the translated label
 ```
 
 ```php
@@ -130,7 +171,7 @@ FilamentLogsExplorerPlugin::make()
     ->discoverUntrackedFiles(directory: storage_path('logs'));
 ```
 
-### Customising the navigation entry
+### Navigation
 
 ```php
 FilamentLogsExplorerPlugin::make()
@@ -139,79 +180,73 @@ FilamentLogsExplorerPlugin::make()
     ->activeNavigationIcon('heroicon-s-bug-ant')
     ->navigationGroup('System')
     ->navigationSort(99)
-    ->navigationBadge()          // show the number of channels as a badge
     ->navigationParentItem('Tools')
-    ->slug('application-logs')
-    ->registerNavigation(true);  // set to false to hide it from the menu
+    ->navigationBadge()          // show the number of channels as a badge
+    ->registerNavigation(false)  // keep the route, hide the menu entry
+    ->slug('application-logs');
 ```
 
-The equivalent config keys live under `navigation` and `slug`.
-
-### Permissions
-
-By default the page is available to anyone who can access the panel. Restrict it
-with a Gate ability…
+To nest the page inside a Filament cluster, pass its class name:
 
 ```php
-// config/filament-logs-explorer.php
+FilamentLogsExplorerPlugin::make()
+    ->cluster(SystemCluster::class);
+```
+
+### Access control
+
+The page is available to anyone who can access the panel. Restrict it with a
+Gate ability:
+
+```php
 'authorization' => [
     'gate' => 'view-logs',
 ],
 ```
 
-…or with a closure, which takes precedence over everything else:
+Or with a closure, which takes precedence over the configured gate:
 
 ```php
 FilamentLogsExplorerPlugin::make()
     ->canAccessUsing(fn (): bool => auth()->user()?->can('viewLogs') ?? false);
 ```
 
-This drives the page's `canAccess()` method, so it controls both the navigation
-visibility and the route authorization.
+Either way this drives the page's `canAccess()` method, so it controls the
+navigation visibility and the route authorization at once.
 
 ### Deleting log files
 
-Every file can be deleted from the file list or from the viewer's toolbar. The
-trash button opens a **confirmation dialog** before permanently removing the
-file from disk; deleting the file you are viewing also closes the slide-over.
-The feature is **enabled by default** and has its own authorization, independent
-of read access, so you can let people browse logs without letting them delete.
-
-Turn it off entirely, or restrict who can delete:
+Deletion is **enabled by default** and has its own authorization, separate from
+read access, so people can browse logs without being able to delete them. The
+trash button asks for confirmation before removing the file from disk, and
+deleting the file currently open also closes the slide-over.
 
 ```php
-// config/filament-logs-explorer.php
 'deletion' => [
     'enabled' => true,
-    // Gate ability required to delete a file. Null => anyone who can access the page.
-    'gate' => 'delete-logs',
+    'gate' => 'delete-logs',  // null => anyone who can access the page
 ],
 ```
 
 ```php
-FilamentLogsExplorerPlugin::make()
-    ->deletable(false);   // hide the delete buttons entirely
-```
+// Hide the delete buttons entirely.
+FilamentLogsExplorerPlugin::make()->deletable(false);
 
-```php
+// Or decide per user.
 FilamentLogsExplorerPlugin::make()
     ->canDeleteUsing(fn (): bool => auth()->user()?->can('deleteLogs') ?? false);
 ```
 
-Like every other option, the fluent value wins over the config file. Files are
-always resolved back from an opaque id (never a raw path), so only files the
-plugin listed itself can be deleted.
+Files are always resolved back from an opaque id, never from a path sent by the
+browser, so only files the plugin listed itself can be deleted, and the check
+runs again server side before the file is removed.
 
-### Large files
-
-To stay responsive, files larger than `reader.max_bytes` are truncated. By
-default the **end** of the file (the most recent entries) is loaded; a banner
-tells the user the file was truncated and invites them to download it.
+### Reader
 
 ```php
 'reader' => [
-    'max_bytes' => 5 * 1024 * 1024, // 5 MB
-    'tail_when_exceeded' => true,   // false => load the beginning instead
+    'max_bytes' => 5 * 1024 * 1024,
+    'tail_when_exceeded' => true,
 ],
 ```
 
@@ -221,44 +256,74 @@ FilamentLogsExplorerPlugin::make()
     ->tailWhenExceeded();
 ```
 
+### Reference
+
+| Config key                  | Fluent method                | Default                                  |
+| --------------------------- | ---------------------------- | ---------------------------------------- |
+| `navigation.register`       | `registerNavigation()`       | `true`                                   |
+| `navigation.label`          | `navigationLabel()`          | translated "Logs"                        |
+| `navigation.icon`           | `navigationIcon()`           | `heroicon-o-document-magnifying-glass`   |
+| `navigation.active_icon`    | `activeNavigationIcon()`     | `heroicon-s-document-magnifying-glass`   |
+| `navigation.group`          | `navigationGroup()`          | `null`                                   |
+| `navigation.sort`           | `navigationSort()`           | `null`                                   |
+| `navigation.parent_item`    | `navigationParentItem()`     | `null`                                   |
+| `navigation.badge`          | `navigationBadge()`          | `false`                                  |
+| `slug`                      | `slug()`                     | `logs`                                   |
+| `cluster`                   | `cluster()`                  | `null`                                   |
+| `channels`                  | `channels()`                 | `[]` (auto-discover)                     |
+| `exclude_channels`          | `excludeChannels()`          | `[]`                                     |
+| `expand_stacks`             | `expandStacks()`             | `true`                                   |
+| `discover_untracked_files`  | `discoverUntrackedFiles()`   | `false`                                  |
+| `log_directory`             | `logDirectory()`             | `null` (`storage_path('logs')`)          |
+| `untracked_channel_label`   | none                         | `null` (translated label)                |
+| `files_per_channel`         | `filesPerChannel()`          | `15`                                     |
+| `reader.max_bytes`          | `maxBytes()`                 | `5242880` (5 MB)                         |
+| `reader.tail_when_exceeded` | `tailWhenExceeded()`         | `true`                                   |
+| `authorization.gate`        | `canAccessUsing()`           | `null`                                   |
+| `deletion.enabled`          | `deletable()`                | `true`                                   |
+| `deletion.gate`             | `canDeleteUsing()`           | `null`                                   |
+
 ## Translations
 
-The package ships with **French**, **English** and **Spanish** translations and
-follows your application locale. Publish them to customise the wording, or to
-add a new language:
+The package ships with **English**, **French** and **Spanish**, and follows your
+application locale. Publish the files to change the wording or to add a
+language:
 
 ```bash
 php artisan vendor:publish --tag="filament-logs-explorer-translations"
 ```
 
-Then edit / create `lang/vendor/filament-logs-explorer/{locale}/filament-logs-explorer.php`.
-
-## Testing
-
-```bash
-composer test
-```
+Then edit or create
+`lang/vendor/filament-logs-explorer/{locale}/filament-logs-explorer.php`.
 
 ## Security
 
 The viewer only ever reads files it resolved itself from your logging
-configuration: the front-end references files by an opaque, non-reversible id
-(never a path), so raw or user-supplied paths are never read from disk.
+configuration. The front end references files by an opaque, non-reversible id
+rather than by path, so a path supplied by the browser is never read from disk,
+and both reading and deleting are re-authorized server side.
 
 If you discover a security issue, please email
-[alexandre@laboiteacode.fr](mailto:alexandre@laboiteacode.fr) instead of using
+[alexandre@laboiteacode.fr](mailto:alexandre@laboiteacode.fr) rather than using
 the issue tracker.
+
+## Testing
+
+```bash
+composer test      # Pest
+composer analyse   # PHPStan / Larastan
+composer format    # Pint
+```
 
 ## Changelog
 
-Please see [CHANGELOG](CHANGELOG.md) for what has changed recently.
+See [CHANGELOG.md](CHANGELOG.md) for what has changed recently.
 
 ## Credits
 
-- [Alexandre Ribes](https://github.com/la-boite-a-code)
 - [La boîte à code](https://laboiteacode.fr)
+- [Alexandre Ribes](https://alexandre-ribes.fr)
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more
-information.
+The MIT License (MIT). See [LICENSE.md](LICENSE.md) for more information.

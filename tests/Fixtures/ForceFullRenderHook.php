@@ -14,7 +14,7 @@ use Livewire\ComponentHook;
  * Filament's partial rendering relies on per-request state that Livewire does
  * not reset between component tests running in the same PHP process, which makes
  * a re-rendered action modal come back empty. Over HTTP each request is isolated
- * so this only ever affects the test harness — never a real application.
+ * so this only ever affects the test harness, never a real application.
  */
 class ForceFullRenderHook extends ComponentHook
 {

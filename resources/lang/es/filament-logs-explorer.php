@@ -71,6 +71,9 @@ return [
         'success_body' => '«:name» se ha eliminado.',
         'failed_title' => 'Error al eliminar',
         'failed_body' => 'No se pudo eliminar «:name».',
+        'denied_title' => 'Acción no permitida',
+        'denied_body' => 'No tienes permiso para eliminar archivos de registro.',
+        'missing_body' => 'Este archivo de registro ya no existe.',
     ],
 
 ];

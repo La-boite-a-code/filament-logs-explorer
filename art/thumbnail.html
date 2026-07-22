@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Filament Logs Explorer - thumbnail</title>
+<style>
+  @font-face { font-family:"Satoshi"; src:local("Satoshi-Regular"); font-weight:400; }
+  @font-face { font-family:"Satoshi"; src:local("Satoshi-Medium");  font-weight:500; }
+  @font-face { font-family:"Satoshi"; src:local("Satoshi-Bold");    font-weight:700; }
+  @font-face { font-family:"Satoshi"; src:local("Satoshi-Black");   font-weight:900; }
+
+  :root{
+    --paper:#FAF8F4;
+    --ink:#17150F;
+    --ink-2:#514B41;
+    --line:#E6E0D4;
+    --amber:#F59E0B;
+    --amber-deep:#B45309;
+    --mark:#FDE68A;
+
+    --ui-line:#E5E7EB;
+    --ui-line-2:#F3F4F6;
+    --ui-text:#111827;
+    --ui-text-2:#1F2937;
+    --ui-muted:#6B7280;
+    --ui-muted-2:#9CA3AF;
+    --ui-surface:#F9FAFB;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ width:1280px; height:720px; overflow:hidden; }
+  body{
+    background:var(--paper);
+    font-family:"Satoshi", -apple-system, BlinkMacSystemFont, sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:geometricPrecision;
+  }
+
+  .stage{ position:relative; width:1280px; height:720px; }
+
+  .grid{
+    position:absolute; inset:0;
+    background-image:radial-gradient(circle at 1px 1px, rgba(23,21,15,.13) 1px, transparent 0);
+    background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(115deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.16) 46%, transparent 72%);
+            mask-image:linear-gradient(115deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.16) 46%, transparent 72%);
+  }
+  .glow-a{
+    position:absolute; width:900px; height:900px; right:-230px; top:-380px;
+    background:radial-gradient(circle, rgba(245,158,11,.22) 0%, rgba(245,158,11,.08) 42%, transparent 66%);
+  }
+  .glow-b{
+    position:absolute; width:760px; height:760px; left:-300px; bottom:-380px;
+    background:radial-gradient(circle, rgba(180,83,9,.09) 0%, transparent 64%);
+  }
+  .wash{
+    position:absolute; inset:0;
+    background:linear-gradient(100deg, transparent 46%, rgba(228,219,202,.34) 100%);
+  }
+
+  /* ---------- copy ---------- */
+  .copy{
+    position:absolute; left:76px; top:0; bottom:0; width:520px;
+    display:flex; flex-direction:column; justify-content:center;
+    z-index:3;
+  }
+  .eyebrow{
+    display:flex; align-items:center; gap:11px;
+    font-size:14px; font-weight:700; letter-spacing:.15em; text-transform:uppercase;
+    color:var(--amber-deep); margin-bottom:24px;
+  }
+  .eyebrow .dot{
+    width:8px; height:8px; border-radius:50%; background:var(--amber);
+    box-shadow:0 0 0 5px rgba(245,158,11,.16);
+  }
+  h1{ font-weight:900; font-size:96px; line-height:.9; letter-spacing:-.038em; }
+  h1 span{ display:block; }
+  .sub{
+    margin-top:28px; font-size:24px; line-height:1.42; font-weight:500;
+    color:var(--ink-2); max-width:475px; letter-spacing:-.008em;
+  }
+  .sub mark{
+    background:var(--mark); color:#3A2A05; border-radius:3px;
+    padding:.06em .2em; margin-inline:-.05em;
+  }
+
+  /* ---------- zoomed viewer fragment ---------- */
+  .frag{
+    position:absolute; left:636px; top:120px; width:730px; height:620px;
+    background:#fff; border:1px solid var(--ui-line); border-radius:18px;
+    overflow:hidden; z-index:2;
+    box-shadow:
+      0 2px 4px rgba(23,21,15,.05),
+      0 30px 56px -22px rgba(23,21,15,.26),
+      -26px 44px 92px -46px rgba(23,21,15,.38);
+  }
+
+  .bar{ display:flex; align-items:center; gap:12px; padding:22px 26px 18px; }
+  .search{ position:relative; flex:1 1 auto; display:flex; align-items:center; max-width:340px; }
+  .search svg{ position:absolute; left:12px; width:17px; height:17px; fill:var(--ui-muted-2); }
+  .search .field{
+    width:100%; padding:10px 12px 10px 37px;
+    border:1px solid #C7D2FE; border-radius:9px; background:#fff;
+    box-shadow:0 0 0 3px rgba(99,102,241,.13);
+    font-size:15px; font-weight:500; color:var(--ui-text); letter-spacing:-.005em;
+  }
+  .matches{ font-size:13.5px; color:var(--ui-muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .ibtn{ width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+  .ibtn svg{ width:18px; height:18px; stroke:#6B7280; fill:none; stroke-width:1.8; }
+  .ibtn.danger svg{ stroke:#DC2626; }
+
+  .viewport{
+    margin:2px 26px 0; border:1px solid var(--ui-line); border-top-left-radius:11px;
+    border-top-right-radius:11px; border-bottom:0;
+    background:var(--ui-surface); overflow:hidden; height:546px;
+  }
+  .lines{
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    font-size:14.5px; line-height:1.72; padding-block:9px; counter-reset:ln;
+  }
+  .ln{
+    counter-increment:ln;
+    display:grid; grid-template-columns:44px minmax(0,1fr); column-gap:14px;
+    color:var(--ui-text-2); white-space:pre; letter-spacing:-.018em;
+  }
+  .ln::before{
+    content:counter(ln); text-align:right; padding-right:10px;
+    color:var(--ui-muted-2); background:var(--ui-line-2);
+    border-right:1px solid var(--ui-line);
+  }
+  .ln--match{ background:rgba(251,191,36,.13); }
+  .ln--current{ background:rgba(251,191,36,.24); box-shadow:inset 3px 0 0 0 #F59E0B; }
+  .ln em{ font-style:normal; background:#FDE68A; color:#111827; border-radius:2px; padding-inline:1px; }
+  .lv-e{ color:#B91C1C; }
+  .lv-w{ color:#B45309; }
+  .lv-i{ color:#4B5563; }
+  .dimtxt{ color:#9CA3AF; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="wash"></div>
+  <div class="grid"></div>
+  <div class="glow-a"></div>
+  <div class="glow-b"></div>
+
+  <div class="frag">
+    <div class="bar">
+      <div class="search">
+        <svg viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg>
+        <div class="field">ERROR</div>
+      </div>
+      <span class="matches">2 / 12</span>
+      <span class="ibtn"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5"/></svg></span>
+      <span class="ibtn"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg></span>
+      <span class="ibtn"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg></span>
+      <span class="ibtn danger"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.2v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg></span>
+    </div>
+
+    <div class="viewport">
+      <div class="lines">
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:13:02]</span> <span class="lv-i">production.DEBUG:</span> Cache hit "catalog:featured"</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:13:58]</span> <span class="lv-w">production.WARNING:</span> Slow query (1.82s) on orders</span></div>
+<div class="ln ln--current"><span><span class="dimtxt">[2026-07-22 09:14:11]</span> <span class="lv-e">production.<em>ERROR</em>:</span> SQLSTATE[HY000] [2002]</span></div>
+<div class="ln ln--match"><span>    Connection refused (SQL: select * from `invoices`)</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:14:12]</span> <span class="lv-i">production.INFO:</span> Retrying [SendInvoiceMail] 2/3</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:15:07]</span> <span class="lv-i">production.INFO:</span> Queue worker released job</span></div>
+<div class="ln ln--match"><span><span class="dimtxt">[2026-07-22 09:15:40]</span> <span class="lv-e">production.<em>ERROR</em>:</span> Undefined array key "vat"</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:16:19]</span> <span class="lv-w">production.WARNING:</span> Deprecated call to Str::sort()</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:16:55]</span> <span class="lv-i">production.INFO:</span> Invoice #INV-2291 generated</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:17:23]</span> <span class="lv-i">production.INFO:</span> Scheduled task ran in 412ms</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:18:01]</span> <span class="lv-i">production.DEBUG:</span> Mail queued for 118 users</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:18:36]</span> <span class="lv-i">production.INFO:</span> Webhook stripe.charge accepted</span></div>
+<div class="ln ln--match"><span><span class="dimtxt">[2026-07-22 09:19:04]</span> <span class="lv-e">production.<em>ERROR</em>:</span> Failed to reach payments API</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:19:41]</span> <span class="lv-i">production.INFO:</span> Backup uploaded (412 MB)</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:20:15]</span> <span class="lv-i">production.INFO:</span> Sitemap regenerated (8 412 urls)</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:20:48]</span> <span class="lv-i">production.DEBUG:</span> Horizon supervisor restarted</span></div>
+<div class="ln ln--match"><span><span class="dimtxt">[2026-07-22 09:21:12]</span> <span class="lv-e">production.<em>ERROR</em>:</span> View [reports.pdf] not found</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:21:55]</span> <span class="lv-w">production.WARNING:</span> Rate limit hit for 51.15.8.4</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:22:30]</span> <span class="lv-i">production.INFO:</span> Nightly digest sent to 2 104</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:23:04]</span> <span class="lv-i">production.INFO:</span> Cache tag "products" flushed</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:23:41]</span> <span class="lv-i">production.DEBUG:</span> Session gc removed 318 rows</span></div>
+<div class="ln"><span><span class="dimtxt">[2026-07-22 09:24:19]</span> <span class="lv-i">production.INFO:</span> Order #4822 confirmed</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="copy">
+    <div class="eyebrow"><span class="dot"></span><span>Filament plugin</span></div>
+    <h1><span>Logs</span><span>Explorer</span></h1>
+    <p class="sub">Browse, read and <mark>search</mark> your Laravel log files, grouped by channel.</p>
+  </div>
+</div>
+</body>
+</html>
