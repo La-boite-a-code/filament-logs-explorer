@@ -6,3 +6,15 @@ parameters:
     paths:
         - src
     tmpDir: build/phpstan
+
+    # The package registers its own "filament-logs-explorer::" view namespace at
+    # runtime, from the service provider's hasViews(). Analysis never boots that
+    # provider, so Larastan cannot know the namespace exists and reports the
+    # view name as a plain string. Whether it fires depends on the installed
+    # Filament patch release, hence reportUnmatchedIgnoredErrors: false.
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        -
+            identifier: argument.type
+            message: '#expects view\-string\|null, string given\.#'
+            path: src/Pages/LogsExplorer.php
