@@ -1,6 +1,6 @@
 {
     "name": "laboiteacode/filament-logs-explorer",
-    "description": "Filament plugin to browse, read and search your Laravel log files, grouped by logging channel.",
+    "description": "Read and search your Laravel log files without leaving your Filament panel.",
     "keywords": [
         "laboiteacode",
         "laravel",

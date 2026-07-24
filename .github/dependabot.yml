@@ -1,0 +1,12 @@
+# Keeps the pinned GitHub Actions SHAs and the Composer constraints current.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: composer
+    directory: "/"
+    schedule:
+      interval: weekly

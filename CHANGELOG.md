@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-24
+
+Supply chain and repository hardening, prompted by an external package audit.
+Nothing in the shipped code changes.
+
+### Added
+
+- `SECURITY.md` describing how to report a vulnerability privately, backed by
+  GitHub private vulnerability reporting, now enabled on the repository.
+- Dependabot configuration covering Composer dependencies and GitHub Actions,
+  on a weekly schedule.
+
+### Changed
+
+- Shorter Composer package description.
+
+### Security
+
+- The CI actions (`actions/checkout`, `shivammathur/setup-php`) are now pinned
+  to full commit SHAs instead of mutable tags, so a re-pointed upstream tag can
+  no longer inject code into the build. Dependabot keeps the pins current.
+
 ## [1.0.0] - 2026-07-22
 
 First stable release, after a full review and security audit. The plugin's own
