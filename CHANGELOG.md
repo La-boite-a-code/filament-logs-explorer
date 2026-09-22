@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-09-22
+
+Makes the `cluster` option work. If you cache Filament components
+(`php artisan filament:optimize`), run it again after upgrading: the cache
+holds the old, unclustered registration.
+
+### Fixed
+
+- The `cluster()` option, and the `cluster` config key, now actually file the
+  page under the cluster. Filament reads the cluster while the plugin is still
+  registering, before the plugin can be looked up on its panel, so the page
+  used to register unclustered. With several panels it could also pick up the
+  cluster configured on another panel.
+  ([#2](https://github.com/La-boite-a-code/filament-logs-explorer/issues/2))
+
 ## [1.0.1] - 2026-07-24
 
 Supply chain and repository hardening, prompted by an external package audit.

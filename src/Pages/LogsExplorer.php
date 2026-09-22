@@ -31,6 +31,30 @@ class LogsExplorer extends Page
 
     protected ?LogChannelRepository $repositoryInstance = null;
 
+    /**
+     * The plugin instance currently registering the page on a panel. Filament
+     * only adds a plugin to its panel once `register()` returns, so the page
+     * cannot look it up yet while the panel files it under a cluster.
+     */
+    protected static ?FilamentLogsExplorerPlugin $registeringPlugin = null;
+
+    /**
+     * Register the page on a panel, resolving its configuration from the given
+     * plugin instance for as long as the registration lasts.
+     *
+     * @internal
+     */
+    public static function registerOn(Panel $panel, FilamentLogsExplorerPlugin $plugin): void
+    {
+        static::$registeringPlugin = $plugin;
+
+        try {
+            $panel->pages([static::class]);
+        } finally {
+            static::$registeringPlugin = null;
+        }
+    }
+
     protected static function trans(string $key, array $replace = []): string
     {
         return (string) trans("filament-logs-explorer::filament-logs-explorer.{$key}", $replace);
@@ -388,6 +412,10 @@ class LogsExplorer extends Page
 
     protected static function plugin(): ?FilamentLogsExplorerPlugin
     {
+        if (static::$registeringPlugin !== null) {
+            return static::$registeringPlugin;
+        }
+
         try {
             return FilamentLogsExplorerPlugin::get();
         } catch (Throwable) {

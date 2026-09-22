@@ -98,9 +98,7 @@ class FilamentLogsExplorerPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        $panel->pages([
-            LogsExplorer::class,
-        ]);
+        LogsExplorer::registerOn($panel, $this);
     }
 
     public function boot(Panel $panel): void
